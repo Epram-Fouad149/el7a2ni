@@ -34,9 +34,9 @@ class ProfileCubit extends Cubit<ProfileState> {
       if (user != null) {
         final fileName = 'public/${user.email}.jpg';
 
-        await supabase.storage
-            .from('profile-pictures')
-            .remove(["profile-pictures/$fileName"]); //msh rady y3ml hnaa remove msh 3arf leh
+        //TODO moshklt el profile pic
+        await supabase.storage.from('profile-pictures').remove([fileName]);
+        //msh rady y3ml hnaa remove msh 3arf leh
         await Future.delayed(const Duration(milliseconds: 500));
         await supabase.storage.from('profile-pictures').upload(fileName, imageFile);
 
@@ -57,6 +57,9 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> updateUserData({
     String? phoneNumber,
     String? bloodType,
+    String? gender,
+    String? nationalNumber,
+    int? age,
   }) async {
     try {
       emit(ProfileLoadingState());
@@ -67,6 +70,9 @@ class ProfileCubit extends Cubit<ProfileState> {
           'id': user.id,
           'phone': phoneNumber,
           'blood_type': bloodType,
+          'gender': gender,
+          'national_number': nationalNumber,
+          if (age != null) 'age': age,
         });
 
         await fetchUserData(); // Refresh data

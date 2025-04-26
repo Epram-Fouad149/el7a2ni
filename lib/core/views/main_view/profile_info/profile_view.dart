@@ -1,3 +1,5 @@
+import 'package:el7a2ni/core/cubit/bluetooth/bluetooth_app_state.dart';
+import 'package:el7a2ni/core/cubit/bluetooth/bluetooth_cubit.dart'; // Add this import
 import 'package:el7a2ni/core/cubit/profile/profile_cubit.dart';
 import 'package:el7a2ni/core/cubit/profile/profile_state.dart';
 import 'package:el7a2ni/core/views/main_view/profile_info/profile_view_model.dart';
@@ -9,7 +11,10 @@ class ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profileViewModel = ProfileViewModel(context.read<ProfileCubit>());
+    final profileViewModel = ProfileViewModel(
+      context.read<ProfileCubit>(),
+      bluetoothCubit: context.read<BluetoothCubit>(), // Pass BluetoothCubit
+    );
     profileViewModel.fetchUserData();
 
     return Scaffold(
@@ -81,6 +86,25 @@ class ProfileView extends StatelessWidget {
                       label: "Blood Type",
                       icon: Icons.bloodtype,
                     ),
+                    const SizedBox(height: 16),
+                    _buildGenderDropdown(
+                      selectedGender: profileViewModel.selectedGender,
+                      onChanged: profileViewModel.onGenderChanged,
+                    ),
+                    const SizedBox(height: 16),
+                    // Add Age field
+                    _buildTextField(
+                      controller: profileViewModel.ageController,
+                      label: "Age",
+                      icon: Icons.calendar_today,
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: profileViewModel.nationalNumberController,
+                      label: "National Number",
+                      icon: Icons.numbers,
+                    ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: profileViewModel.updateAllFields,
@@ -95,6 +119,38 @@ class ProfileView extends StatelessWidget {
                         "Update All Fields",
                         style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Add Send to Vehicle button
+                    BlocBuilder<BluetoothCubit, BluetoothAppState>(
+                      builder: (context, bluetoothState) {
+                        return ElevatedButton(
+                          onPressed:
+                              bluetoothState.isConnected ? () => profileViewModel.sendProfileToArduino(context) : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            disabledBackgroundColor: Colors.grey,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                bluetoothState.isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "Send to Vehicle",
+                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -117,12 +173,42 @@ class ProfileView extends StatelessWidget {
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return TextField(
       controller: controller,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.blueAccent),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: Colors.blueAccent),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenderDropdown({
+    required String selectedGender,
+    required Function(String?) onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: selectedGender.isNotEmpty ? selectedGender : null,
+      items: ['Male', 'Female'].map((gender) {
+        return DropdownMenuItem<String>(
+          value: gender,
+          child: Text(gender),
+        );
+      }).toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: 'Gender',
+        prefixIcon: const Icon(Icons.person, color: Colors.blueAccent),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
           borderSide: const BorderSide(color: Colors.blueAccent),

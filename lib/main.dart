@@ -1,9 +1,13 @@
+import 'package:el7a2ni/core/cubit/bluetooth/bluetooth_cubit.dart';
+import 'package:el7a2ni/core/cubit/home/home_cubit.dart';
 import 'package:el7a2ni/core/cubit/login/login_cubit.dart';
 import 'package:el7a2ni/core/cubit/navigation/navigation_cubit.dart';
 import 'package:el7a2ni/core/cubit/profile/profile_cubit.dart';
 import 'package:el7a2ni/core/cubit/registration/registration_cubit.dart';
 import 'package:el7a2ni/core/cubit/settings/settings_cubit.dart';
 import 'package:el7a2ni/core/cubit/splash/splash_cubit.dart';
+import 'package:el7a2ni/core/utils/bluetooth_background_service.dart';
+import 'package:el7a2ni/core/utils/notification_service.dart';
 import 'package:el7a2ni/core/views/login/login_view.dart';
 import 'package:el7a2ni/core/views/main_view/main_view.dart';
 import 'package:el7a2ni/core/views/register/registration_view.dart';
@@ -14,6 +18,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize notification service
+  await NotificationService().initialize();
+
+  // Initialize background service
+  await BluetoothBackgroundService.initializeService();
 
   // Initialize Supabase
   await Supabase.initialize(
@@ -32,9 +42,11 @@ class El7a2niApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider(create: (_) => BluetoothCubit(), lazy: false),
         BlocProvider(create: (_) => SplashCubit()),
         BlocProvider(create: (_) => LoginCubit()),
         BlocProvider(create: (_) => RegistrationCubit()),
+        BlocProvider<HomeCubit>(create: (context) => HomeCubit(bluetoothCubit: context.read<BluetoothCubit>())),
         BlocProvider(create: (_) => ProfileCubit()),
         BlocProvider(create: (_) => NavigationCubit()),
         BlocProvider(create: (_) => SettingsCubit()),
